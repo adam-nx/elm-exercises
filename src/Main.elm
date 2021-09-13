@@ -34,7 +34,13 @@ main =
 
 
 type alias Model =
-    { dieFace : DieFace
+    { dice : Dice
+    }
+
+
+type alias Dice =
+    { die1 : DieFace
+    , die2 : DieFace
     }
 
 
@@ -49,7 +55,7 @@ type DieFace
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model One
+    ( Model (Dice One One)
     , Cmd.none
     )
 
@@ -60,7 +66,7 @@ init _ =
 
 type Msg
     = Roll
-    | NewFace DieFace
+    | NewFaces Dice
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,23 +74,28 @@ update msg model =
     case msg of
         Roll ->
             ( model
-            , Random.generate NewFace rollDie
+            , Random.generate NewFaces rollAllDice
             )
 
-        NewFace newFace ->
+        NewFaces newFace ->
             ( Model newFace
             , Cmd.none
             )
 
 
+rollAllDice : Random.Generator Dice
+rollAllDice =
+    Random.map2 Dice rollDie rollDie
+
+
 rollDie : Random.Generator DieFace
 rollDie =
-    Random.weighted ( 90, One )
-        [ ( 10, Two )
-        , ( 10, Three )
-        , ( 10, Four )
-        , ( 10, Five )
-        , ( 10, Six )
+    Random.weighted ( 1, One )
+        [ ( 1, Two )
+        , ( 1, Three )
+        , ( 1, Four )
+        , ( 1, Five )
+        , ( 1, Six )
         ]
 
 
@@ -104,7 +115,8 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     div []
-        [ getDieFaceSvg model.dieFace
+        [ getDieFaceSvg model.dice.die1
+        , getDieFaceSvg model.dice.die2
         , br [] []
         , button [ onClick Roll ] [ text "Roll" ]
         ]
