@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Die exposing (..)
 
 -- Press a button to generate a random number between 1 and 6.
 --
@@ -10,9 +10,11 @@ module Main exposing (..)
 import Browser
 import Html exposing (..)
 import Html.Events exposing (..)
+import Process
 import Random
 import Svg exposing (Svg, circle, rect, svg)
 import Svg.Attributes exposing (..)
+import Task
 
 
 
@@ -35,6 +37,7 @@ main =
 
 type alias Model =
     { dice : Dice
+    , countdown : Int
     }
 
 
@@ -55,7 +58,7 @@ type DieFace
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model (Dice One One)
+    ( Model (Dice One One) 0
     , Cmd.none
     )
 
@@ -66,7 +69,8 @@ init _ =
 
 type Msg
     = Roll
-    | Countdown ( Int, Dice )
+    | Countdown Dice
+    | SleepComplete
     | NewFaces Dice
 
 
@@ -74,21 +78,29 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Roll ->
-            ( model
-            , Random.generate Countdown ( 10, rollAllDice )
+            ( { model | countdown = 7 }
+            , Random.generate Countdown rollAllDice
             )
 
-        Countdown ( countdown, dice ) ->
-            ( { model | dice = dice }
-            , if countdown > 0 then
+        Countdown dice ->
+            let
+                newCountdown =
+                    model.countdown - 1
+            in
+            ( { model | dice = dice, countdown = newCountdown }
+            , if newCountdown == 0 then
                 Random.generate NewFaces rollAllDice
 
               else
-                Random.generate Countdown ( countdown - 1, rollAllDice )
+                Process.sleep 100
+                    |> Task.perform (\_ -> SleepComplete)
             )
 
-        NewFaces newFace ->
-            ( Model newFace
+        SleepComplete ->
+            ( model, Random.generate Countdown rollAllDice )
+
+        NewFaces dice ->
+            ( Model dice 7
             , Cmd.none
             )
 
@@ -129,6 +141,7 @@ view model =
         , getDieFaceSvg model.dice.die2
         , br [] []
         , button [ onClick Roll ] [ text "Roll" ]
+        , div [] [ text (String.fromInt model.countdown) ]
         ]
 
 
@@ -140,11 +153,6 @@ dieDotRadius =
 dieDotColor : String
 dieDotColor =
     "red"
-
-
-dieColor : String
-dieColor =
-    "green"
 
 
 getDieFaceSvg : DieFace -> Svg msg
@@ -336,7 +344,7 @@ makeSvgDice circles =
             , height "100"
             , rx "15"
             , ry "15"
-            , fill "white"
+            , fill "green"
             , stroke "black"
             ]
             []
