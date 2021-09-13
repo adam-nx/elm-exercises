@@ -66,6 +66,7 @@ init _ =
 
 type Msg
     = Roll
+    | Countdown ( Int, Dice )
     | NewFaces Dice
 
 
@@ -74,7 +75,16 @@ update msg model =
     case msg of
         Roll ->
             ( model
-            , Random.generate NewFaces rollAllDice
+            , Random.generate Countdown ( 10, rollAllDice )
+            )
+
+        Countdown ( countdown, dice ) ->
+            ( { model | dice = dice }
+            , if countdown > 0 then
+                Random.generate NewFaces rollAllDice
+
+              else
+                Random.generate Countdown ( countdown - 1, rollAllDice )
             )
 
         NewFaces newFace ->
