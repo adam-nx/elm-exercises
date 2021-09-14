@@ -11,7 +11,10 @@ module Clock exposing (..)
 
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import Svg exposing (Svg, svg)
+import Svg.Attributes exposing (cx, cy, fill, height, r, stroke, viewBox, width, x1, x2, y1, y2)
 import Task
 import Time
 
@@ -128,8 +131,138 @@ view model =
 
                 Unpaused ->
                     "STOP!!!"
+
+        xx =
+            String.fromFloat (Tuple.first (unitCirclePosition (angleFromHour hour) 1.0))
+
+        yy =
+            String.fromFloat (Tuple.second (unitCirclePosition (angleFromHour hour) 1.0))
     in
-    div []
-        [ h1 [] [ text (hour ++ ":" ++ minute ++ ":" ++ second ++ ":" ++ millisecond) ]
-        , button [ onClick ToggleClockState ] [ text pauseButtonText ]
+    div
+        [ style "position" "fixed"
+        , style "top" "50%"
+        , style "left" "50%"
+        , style "transform" "translate(-50%, -50%)"
         ]
+        [ --  h3 [ style "font-family" "monospace" ] [ text (hour ++ ":" ++ minute ++ ":" ++ second ++ ":" ++ millisecond) ]
+          button [ onClick ToggleClockState ] [ text pauseButtonText ]
+        , svgClock hour minute second
+        ]
+
+
+clockRadius =
+    45.0
+
+
+minuteCoordinates : String -> Float -> ( String, String )
+minuteCoordinates minute length =
+    let
+        ( circlePositionX, circlePositionY ) =
+            unitCirclePosition (angleFromMinute minute) (clockRadius * length)
+
+        positionX =
+            String.fromFloat circlePositionX
+
+        positionY =
+            String.fromFloat circlePositionY
+    in
+    ( positionX, positionY )
+
+
+hourCoordinates : String -> ( String, String )
+hourCoordinates hour =
+    let
+        ( circlePositionX, circlePositionY ) =
+            unitCirclePosition (angleFromHour hour) (clockRadius * 0.95)
+
+        positionX =
+            String.fromFloat circlePositionX
+
+        positionY =
+            String.fromFloat circlePositionY
+    in
+    ( positionX, positionY )
+
+
+svgClock : String -> String -> String -> Svg msg
+svgClock hour minute second =
+    let
+        ( hourPositionX, hourPositionY ) =
+            hourCoordinates hour
+
+        ( minutePositionX, minutePositionY ) =
+            minuteCoordinates minute 0.8
+
+        ( secondPositionX, secondPositionY ) =
+            minuteCoordinates second 0.6
+    in
+    svg
+        [ viewBox "0 0 100 100" ]
+        [ Svg.circle
+            [ fill "yellow"
+            , stroke "black"
+            , cx "50"
+            , cy "50"
+            , r (String.fromFloat clockRadius)
+            ]
+            []
+        , Svg.line
+            [ x1 "50"
+            , y1 "50"
+            , x2 hourPositionX
+            , y2 hourPositionY
+            , stroke "black"
+            ]
+            []
+        , Svg.line
+            [ x1 "50"
+            , y1 "50"
+            , x2 minutePositionX
+            , y2 minutePositionY
+            , stroke "red"
+            ]
+            []
+        , Svg.line
+            [ x1 "50"
+            , y1 "50"
+            , x2 secondPositionX
+            , y2 secondPositionY
+            , stroke "purple"
+            ]
+            []
+        , Svg.circle
+            [ fill "black"
+            , stroke "black"
+            , cx "50"
+            , cy "50"
+            , r "2"
+            ]
+            []
+        ]
+
+
+unitCirclePosition : Float -> Float -> ( Float, Float )
+unitCirclePosition angle scale =
+    ( (sin (degrees angle) * scale) + 50
+    , negate (cos (degrees angle) * scale) + 50
+    )
+
+
+angleFromHour : String -> Float
+angleFromHour hourString =
+    case String.toFloat hourString of
+        Just hour ->
+            (hour / 12.0) * 360.0
+
+        Nothing ->
+            0.0
+
+
+angleFromMinute : String -> Float
+angleFromMinute minuteString =
+    case String.toFloat minuteString of
+        Just minute ->
+            (minute / 60.0) * 360.0
+
+        Nothing ->
+            0.0
