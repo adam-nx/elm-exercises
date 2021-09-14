@@ -136,198 +136,45 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ style "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);" ]
         [ getDieFaceSvg model.dice.die1
         , getDieFaceSvg model.dice.die2
         , br [] []
-        , button [ onClick Roll ] [ text "Roll" ]
-        , div [] [ text (String.fromInt model.countdown) ]
+        , button [ style "background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; width: 100%; font-size: 16px;", onClick Roll ] [ text "Roll" ]
         ]
-
-
-dieDotRadius : String
-dieDotRadius =
-    "13"
-
-
-dieDotColor : String
-dieDotColor =
-    "red"
 
 
 getDieFaceSvg : DieFace -> Svg msg
 getDieFaceSvg dieFace =
     case dieFace of
         One ->
-            makeSvgDice
-                [ circle
-                    [ cx "60"
-                    , cy "60"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "60" "60" ]
 
         Two ->
-            makeSvgDice
-                [ circle
-                    [ cx "30"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "30" "30", svgDot "90" "90" ]
 
         Three ->
-            makeSvgDice
-                [ circle
-                    [ cx "30"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "60"
-                    , cy "60"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "30" "30", svgDot "60" "60", svgDot "90" "90" ]
 
         Four ->
-            makeSvgDice
-                [ circle
-                    [ cx "30"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "30"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "30" "30", svgDot "30" "90", svgDot "90" "30", svgDot "90" "90" ]
 
         Five ->
-            makeSvgDice
-                [ circle
-                    [ cx "30"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "30"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "60"
-                    , cy "60"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "30" "30", svgDot "30" "90", svgDot "90" "30", svgDot "90" "90", svgDot "60" "60" ]
 
         Six ->
-            makeSvgDice
-                [ circle
-                    [ cx "30"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "30"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "30"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "30"
-                    , cy "60"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "60"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                , circle
-                    [ cx "90"
-                    , cy "90"
-                    , r dieDotRadius
-                    , fill dieDotColor
-                    ]
-                    []
-                ]
+            makeSvgDice [ svgDot "30" "30", svgDot "30" "90", svgDot "90" "30", svgDot "30" "60", svgDot "90" "60", svgDot "90" "90" ]
+
+
+svgDot : String -> String -> Svg msg
+svgDot dotX dotY =
+    circle
+        [ cx dotX
+        , cy dotY
+        , r "13"
+        , fill "black"
+        ]
+        []
 
 
 makeSvgDice : List (Svg msg) -> Svg msg
@@ -344,7 +191,7 @@ makeSvgDice circles =
             , height "100"
             , rx "15"
             , ry "15"
-            , fill "green"
+            , fill "red"
             , stroke "black"
             ]
             []
