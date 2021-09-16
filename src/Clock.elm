@@ -131,12 +131,6 @@ view model =
 
                 Unpaused ->
                     "STOP!!!"
-
-        xx =
-            String.fromFloat (Tuple.first (unitCirclePosition (angleFromHour hour) 1.0))
-
-        yy =
-            String.fromFloat (Tuple.second (unitCirclePosition (angleFromHour hour) 1.0))
     in
     div
         [ style "position" "fixed"
@@ -144,14 +138,28 @@ view model =
         , style "left" "50%"
         , style "transform" "translate(-50%, -50%)"
         ]
-        [ --  h3 [ style "font-family" "monospace" ] [ text (hour ++ ":" ++ minute ++ ":" ++ second ++ ":" ++ millisecond) ]
-          button [ onClick ToggleClockState ] [ text pauseButtonText ]
-        , svgClock hour minute second
+        [ button [ onClick ToggleClockState ] [ text pauseButtonText ]
+        , svgClock hour minute second millisecond
         ]
 
 
 clockRadius =
     45.0
+
+
+milliCoordinates : String -> Float -> ( String, String )
+milliCoordinates milli length =
+    let
+        ( circlePositionX, circlePositionY ) =
+            unitCirclePosition (angleFromMilli milli) (clockRadius * length)
+
+        positionX =
+            String.fromFloat circlePositionX
+
+        positionY =
+            String.fromFloat circlePositionY
+    in
+    ( positionX, positionY )
 
 
 minuteCoordinates : String -> Float -> ( String, String )
@@ -184,8 +192,8 @@ hourCoordinates hour =
     ( positionX, positionY )
 
 
-svgClock : String -> String -> String -> Svg msg
-svgClock hour minute second =
+svgClock : String -> String -> String -> String -> Svg msg
+svgClock hour minute second milli =
     let
         ( hourPositionX, hourPositionY ) =
             hourCoordinates hour
@@ -195,6 +203,9 @@ svgClock hour minute second =
 
         ( secondPositionX, secondPositionY ) =
             minuteCoordinates second 0.6
+
+        ( milliPositionX, milliPositionY ) =
+            milliCoordinates milli 0.4
     in
     svg
         [ viewBox "0 0 100 100" ]
@@ -220,6 +231,14 @@ svgClock hour minute second =
             , x2 minutePositionX
             , y2 minutePositionY
             , stroke "red"
+            ]
+            []
+        , Svg.line
+            [ x1 "50"
+            , y1 "50"
+            , x2 milliPositionX
+            , y2 milliPositionY
+            , stroke "green"
             ]
             []
         , Svg.line
@@ -263,6 +282,16 @@ angleFromMinute minuteString =
     case String.toFloat minuteString of
         Just minute ->
             (minute / 60.0) * 360.0
+
+        Nothing ->
+            0.0
+
+
+angleFromMilli : String -> Float
+angleFromMilli milliString =
+    case String.toFloat milliString of
+        Just milli ->
+            (milli / 1000.0) * 360.0
 
         Nothing ->
             0.0
