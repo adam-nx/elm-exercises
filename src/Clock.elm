@@ -14,7 +14,7 @@ import Html exposing (..)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Svg exposing (Svg, svg)
-import Svg.Attributes exposing (cx, cy, fill, height, r, stroke, viewBox, width, x1, x2, y1, y2)
+import Svg.Attributes exposing (cx, cy, fill, r, stroke, viewBox, x1, x2, y1, y2)
 import Task
 import Time
 
@@ -23,6 +23,7 @@ import Time
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -79,16 +80,17 @@ update msg model =
             )
 
         ToggleClockState ->
-            let
-                newClockState =
-                    case model.clockState of
-                        Paused ->
-                            Unpaused
+            ( { model | clockState = flipClockState model.clockState }, Cmd.none )
 
-                        Unpaused ->
-                            Paused
-            in
-            ( { model | clockState = newClockState }, Cmd.none )
+
+flipClockState : ClockState -> ClockState
+flipClockState clockState =
+    case clockState of
+        Paused ->
+            Unpaused
+
+        Unpaused ->
+            Paused
 
 
 
@@ -130,7 +132,7 @@ view model =
                     "GO!"
 
                 Unpaused ->
-                    "STOP!!!"
+                    "STOP"
     in
     div
         [ style "position" "fixed"
@@ -138,50 +140,41 @@ view model =
         , style "left" "50%"
         , style "transform" "translate(-50%, -50%)"
         ]
-        [ button [ onClick ToggleClockState ] [ text pauseButtonText ]
-        , svgClock hour minute second millisecond
+        [ svgClock hour minute second millisecond
+        , button [ onClick ToggleClockState ] [ text pauseButtonText ]
         ]
 
 
+clockRadius : Float
 clockRadius =
     45.0
 
 
-milliCoordinates : String -> Float -> ( String, String )
-milliCoordinates milli length =
-    let
-        ( circlePositionX, circlePositionY ) =
-            unitCirclePosition (angleFromMilli milli) (clockRadius * length)
-
-        positionX =
-            String.fromFloat circlePositionX
-
-        positionY =
-            String.fromFloat circlePositionY
-    in
-    ( positionX, positionY )
+milliCoordinates : String -> ( String, String )
+milliCoordinates milli =
+    handCoordinates (angleFromMilli milli) 0.4
 
 
-minuteCoordinates : String -> Float -> ( String, String )
-minuteCoordinates minute length =
-    let
-        ( circlePositionX, circlePositionY ) =
-            unitCirclePosition (angleFromMinute minute) (clockRadius * length)
+secondCoordinates : String -> ( String, String )
+secondCoordinates second =
+    handCoordinates (angleFromMinute second) 0.6
 
-        positionX =
-            String.fromFloat circlePositionX
 
-        positionY =
-            String.fromFloat circlePositionY
-    in
-    ( positionX, positionY )
+minuteCoordinates : String -> ( String, String )
+minuteCoordinates minute =
+    handCoordinates (angleFromMinute minute) 0.8
 
 
 hourCoordinates : String -> ( String, String )
 hourCoordinates hour =
+    handCoordinates (angleFromHour hour) 0.95
+
+
+handCoordinates : Float -> Float -> ( String, String )
+handCoordinates angle handLength =
     let
         ( circlePositionX, circlePositionY ) =
-            unitCirclePosition (angleFromHour hour) (clockRadius * 0.95)
+            unitCirclePosition angle (clockRadius * handLength)
 
         positionX =
             String.fromFloat circlePositionX
@@ -194,19 +187,6 @@ hourCoordinates hour =
 
 svgClock : String -> String -> String -> String -> Svg msg
 svgClock hour minute second milli =
-    let
-        ( hourPositionX, hourPositionY ) =
-            hourCoordinates hour
-
-        ( minutePositionX, minutePositionY ) =
-            minuteCoordinates minute 0.8
-
-        ( secondPositionX, secondPositionY ) =
-            minuteCoordinates second 0.6
-
-        ( milliPositionX, milliPositionY ) =
-            milliCoordinates milli 0.4
-    in
     svg
         [ viewBox "0 0 100 100" ]
         [ Svg.circle
@@ -217,38 +197,10 @@ svgClock hour minute second milli =
             , r (String.fromFloat clockRadius)
             ]
             []
-        , Svg.line
-            [ x1 "50"
-            , y1 "50"
-            , x2 hourPositionX
-            , y2 hourPositionY
-            , stroke "black"
-            ]
-            []
-        , Svg.line
-            [ x1 "50"
-            , y1 "50"
-            , x2 minutePositionX
-            , y2 minutePositionY
-            , stroke "red"
-            ]
-            []
-        , Svg.line
-            [ x1 "50"
-            , y1 "50"
-            , x2 milliPositionX
-            , y2 milliPositionY
-            , stroke "green"
-            ]
-            []
-        , Svg.line
-            [ x1 "50"
-            , y1 "50"
-            , x2 secondPositionX
-            , y2 secondPositionY
-            , stroke "purple"
-            ]
-            []
+        , svgHand (hourCoordinates hour) "black"
+        , svgHand (minuteCoordinates minute) "red"
+        , svgHand (secondCoordinates second) "pink"
+        , svgHand (milliCoordinates milli) "magenta"
         , Svg.circle
             [ fill "black"
             , stroke "black"
@@ -260,6 +212,11 @@ svgClock hour minute second milli =
         ]
 
 
+svgHand : ( String, String ) -> String -> Svg msg
+svgHand ( positionX, positionY ) color =
+    Svg.line [ x1 "50", y1 "50", x2 positionX, y2 positionY, stroke color ] []
+
+
 unitCirclePosition : Float -> Float -> ( Float, Float )
 unitCirclePosition angle scale =
     ( (sin (degrees angle) * scale) + 50
@@ -268,30 +225,25 @@ unitCirclePosition angle scale =
 
 
 angleFromHour : String -> Float
-angleFromHour hourString =
-    case String.toFloat hourString of
-        Just hour ->
-            (hour / 12.0) * 360.0
-
-        Nothing ->
-            0.0
+angleFromHour =
+    angleFromNumber 12.0
 
 
 angleFromMinute : String -> Float
-angleFromMinute minuteString =
-    case String.toFloat minuteString of
-        Just minute ->
-            (minute / 60.0) * 360.0
-
-        Nothing ->
-            0.0
+angleFromMinute =
+    angleFromNumber 60.0
 
 
 angleFromMilli : String -> Float
-angleFromMilli milliString =
-    case String.toFloat milliString of
-        Just milli ->
-            (milli / 1000.0) * 360.0
+angleFromMilli =
+    angleFromNumber 1000.0
+
+
+angleFromNumber : Float -> String -> Float
+angleFromNumber scale numberString =
+    case String.toFloat numberString of
+        Just number ->
+            (number / scale) * 360.0
 
         Nothing ->
             0.0
